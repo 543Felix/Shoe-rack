@@ -26,12 +26,15 @@ const userSchema  = new mongoose.Schema({
         required:true,
         default:false
     },
-    verified:{
+    wallet:{
         type:Number,
-        required:true,
-        default:false
+        default:0
+    },
+    walletTransaction:{
+        type:Array
     }
 })
 
 
-module.exports = mongoose.model('User',userSchema)
+const User = mongoose.model('User',userSchema)
+module.exports =User

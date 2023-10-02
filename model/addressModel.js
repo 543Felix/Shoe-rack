@@ -39,4 +39,5 @@ const userAddressSchema = new mongoose.Schema({
     ],
   });
   
-  module.exports = mongoose.model("Address", userAddressSchema)
+  const Address = mongoose.model("Address", userAddressSchema)
+  module.exports = Address

@@ -58,8 +58,6 @@ const addToCart = async (productId, userId) => {
                     }
                 } else {
                     if (product.stock > 0) {
-
-                        console.log('after added productfor 1st time to cart');
                         const newCart = await Cart({
                             user: userId,
                             cartItems: productObj,

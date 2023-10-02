@@ -1,7 +1,8 @@
 const admin = require('../model/adminModel')
 const jwt = require('jsonwebtoken')
 const User = require ('../model/userModel')
-
+const orderHelper = require('../helper/orderHelper')
+const adminHelper = require('../helper/adminHelper')
 const maxAge = 3*24*60*60
 
 const createToken = (id) => {
@@ -101,6 +102,71 @@ const logOut = async(req,res)=>{
         console.error(error.message);
     }
 }
+
+const orderList = (req, res) => {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+  
+    orderHelper
+      .getOrderList(page, limit)
+      .then(({ orders, totalPages, page: currentPage, limit: itemsPerPage }) => {
+        res.render("orderList", {
+          orders,
+          totalPages,
+          page: currentPage,
+          limit: itemsPerPage,
+        });
+      })
+      .catch((error) => {
+        console.log(error.message);
+      });
+  };
+
+  const orderDetails = async (req,res)=>{
+    try {
+      const id = req.query.id
+       await adminHelper.findOrder(id).then((orders) => {
+        const address = orders[0].shippingAddress
+        const products = orders[0].productDetails 
+        res.render('orderDetails',{orders,address,products}) 
+      });
+        
+    } catch (error) {
+      console.log(error.message);
+    }
+  
+  }
+  const changeStatus = async(req,res)=>{
+    const orderId = req.body.orderId
+    const status = req.body.status
+    adminHelper.changeOrderStatus(orderId, status).then((response) => {
+      res.json(response);
+    });
+  
+  }
+
+  const cancelOrder = async(req,res)=>{
+    const userId = req.body.userId
+  
+    const orderId = req.body.orderId
+    const status = req.body.status
+  
+    adminHelper.cancelOrder(orderId,userId,status).then((response) => {
+      res.send(response);
+    });
+  
+  }
+  const returnOrder = async(req,res)=>{
+    const orderId = req.body.orderId
+    const status = req.body.status
+    const userId = req.body.userId
+  
+  
+    adminHelper.returnOrder(orderId,userId,status).then((response) => {
+      res.send(response);
+    });
+  
+  } 
 module.exports={
     adminRegistration,
     adminLogin,
@@ -109,5 +175,10 @@ module.exports={
     loadUsers,
     blockUser,
     unBlockUser,
-    logOut
+    logOut,
+    orderList,
+    orderDetails,
+    changeStatus,
+    cancelOrder,
+    returnOrder
 }

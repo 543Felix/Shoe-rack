@@ -34,7 +34,6 @@ const userLogin=async(req,res,next)=>{
         if(res.locals.user !==null){
             res.redirect('/')
         }else{
-            console.log('user login');
             res.render('login')
         } 
     } catch (error) {

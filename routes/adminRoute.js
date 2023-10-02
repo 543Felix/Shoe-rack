@@ -5,6 +5,8 @@ const categoryController = require('../controllers/categoryController')
 const productController = require('../controllers/productController')
 const validate = require('../middilewares/adminAuth')
 const multer = require('../multer/multer')
+
+
 admin_route.set('view engine','ejs')
 admin_route.set('views','./views/admin')
 
@@ -46,8 +48,11 @@ admin_route.get('/userList',validate.requireAuth,adminController.loadUsers)
 admin_route.post('/blockUser',adminController.blockUser)
 admin_route.post('/unBlockUser',adminController.unBlockUser)
 
-
-
-
+//Order
+admin_route.get('/orderList',validate.requireAuth,adminController.orderList)
+admin_route.get('/orderDetails',adminController.orderDetails)
+admin_route.put('/orderStatus',adminController.changeStatus)
+admin_route.put('/cancelOrder',adminController.cancelOrder)
+admin_route.put('/returnOrder',adminController.returnOrder)
 
 module.exports= admin_route
