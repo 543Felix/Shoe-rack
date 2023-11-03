@@ -1,5 +1,6 @@
 const Cart = require('../model/cartModel')
 const product = require('../model/productModel')
+const wishList = require('../model/wishlistModel')
 const cartHelper = require('../helper/cartHelper')
 
 const addToCart = (req,res)=>{
@@ -36,6 +37,7 @@ const loadCart = async (req,res)=>{
                         item:"$cartItems.productId",
                         quantity:"$cartItems.quantity",
                         total:"$cartItems.total",
+                        discountedPrice:"$cartItems.discountedPrice",
                         carted:{ $arrayElemAt: ["$carted", 0] }
                     }
                 }

@@ -32,7 +32,11 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.1.5/dist/sweetalert2.min.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.1.5/dist/sweetalert2.min.js"></script>
 </head>
-
+<style>
+  h1 {
+    margin-bottom: 50px;
+  }
+</style>
 <body>
 
     <%- include('../layouts/header.ejs') %>
@@ -42,6 +46,9 @@
             <div class="cart_inner">
                 <div class="table-responsive">
                   <%if(cart.length!=0){%>
+                    <center>
+                      <h1  style="font-family: cursive;">Shopping Cart</h1>
+                    </center>
                     <table class="table">
                         <thead>
                             <tr><th scope="col"></th>
@@ -72,8 +79,13 @@
                                     </div>
                                 </td>
                                 <td >
+                                  <% if(cart.discountedPrice>0){ %>
+                                    <h5><i class="fa fa-inr" aria-hidden="true"></i>
+                                      <%=cart.discountedPrice%></h5>
+                                    <% }else{ %>
                                     <h5><i class="fa fa-inr" aria-hidden="true"></i>
                                         <%=cart.carted.price%></h5>
+                                      <% } %>
                                 </td>
                     
                                 <td class="" data-title="Stock">
@@ -93,7 +105,7 @@
 
                                 </td>
                                 <td class="action" style="padding-left: 40px; font-size: 20px;" data-title="Remove"><a href="#" class="text-muted" 
-                                  onclick="deleteProduct('<%=cart._id%>','<%=cart.item%>','<%= cart.quantity %>')"><i class="fa fa-trash" aria-hidden="true"></i>
+                                  onclick="deleteProduct('<%=cart._id%>','<%=user._id%>','<%=cart.item%>','<%= cart.quantity %>')"><i class="fa fa-trash" aria-hidden="true"></i>
                                 </a></td>
                        
 
@@ -158,8 +170,9 @@
                     <%}else{%>
                       <center>
                         <div class="col-md-lg-5">
+                          <img style="height: 250px;" src="../users/no-cart.gif" alt="Animated GIF">
                             <div class="typography">
-                                <h1>THERE ARE NO ITEMS IN CART</h1>
+                                <h1>CART IS EMPTY</h1>
                             </div>
                         </div>
                     </center>
@@ -250,7 +263,7 @@
           }
       
         }
-        function deleteProduct(cartId, proId,quantity) {
+        function deleteProduct(cartId,userId,proId,quantity) {
     Swal.fire({
       title: 'Are you sure?',
       text: "You won't be able to revert this!",
@@ -268,7 +281,8 @@
           data: {
             cartId: cartId,
             proId: proId,
-            quantity,quantity
+            quantity,quantity,
+            userId:userId
           },
           success: (response) => {
             if (response.status) {

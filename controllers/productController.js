@@ -38,7 +38,7 @@ const productHelper = require('../helper/productHelper')
     const displayProduct = async(req,res)=>{
         try {
     
-          const product = await Product.find({})
+          const product = await Product.find({}).populate('category')
           res.render('productsList',{product:product})    
         } catch (error) {
           console.log(error.message)

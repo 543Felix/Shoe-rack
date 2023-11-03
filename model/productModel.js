@@ -20,6 +20,13 @@ const productSchema = new mongoose.Schema({
       type:Number,
       required:true
     },
+    discountPercentage:{
+      type:Number,
+      default:0
+  },discountValidity:{
+      type: Date,
+      default: new Date()
+  },
     isCategoryListed:{
       type:Boolean,
       default:true

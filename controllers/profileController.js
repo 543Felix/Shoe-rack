@@ -1,6 +1,6 @@
 const Address = require('../model/addressModel')
 const profileHelper = require('../helper/profileHelper')
-
+const User = require('../model/userModel')
 const loadDashboard = async (req,res)=>{
     try {
       res.render('dashboard')  
@@ -40,6 +40,16 @@ const checkOutAddress = async(req,res)=>{
     
 }
 
+const profile = async (req, res) => {
+  try {
+    let arr = []
+    const user = res.locals.user;
+    res.render("profileDetails", { user, arr });
+  } catch (error) {
+    console.log(error.message);
+    res.redirect('/error-500')
+  }
+};
 const profileAdress = async (req, res) => {
     try {
       let arr = []
@@ -56,8 +66,57 @@ const profileAdress = async (req, res) => {
       console.log(error.message);
     }
   };
+
+  const editAddress = async(req,res)=>{
+    const id = req.body.id
+    const name = req.body.name
+    const mobileNumber = req.body.mobileNumber
+    const address = req.body.address
+    const locality = req.body.locality
+    const city = req.body.city
+    const pincode = req.body.pincode
+    const state = req.body.state
+    const updateAddress = await Address.updateOne(
+      {"addresses._id":id},
+      {
+        $set:{
+          "addresses.$.name":name,
+          "addresses.$.mobileNumber":mobileNumber,
+          "addresses.$.address":address,
+          "addresses.$.locality":locality,
+          "addresses.$.city":city,
+          "addresses.$.pincode":pincode,
+          "addresses.$.state":state
+
+        }
+      }
+    ) 
+  }
+
+  const walletTransaction = async(req,res)=>{
+    try {
+      const user = res.locals.user
+      // const userData= await User.findOne({_id:user._id})
+      const wallet = await User.aggregate([
+        {$match:{_id:user._id}},
+        {$unwind:"$walletTransaction"},
+        {$sort:{"walletTransaction.date":-1}},
+        {$project:{walletTransaction:1,wallet:1}}
+      ])
+  
+      res.render('walletTransaction',{wallet})
+      
+    } catch (error) {
+      console.log(error.message);
+    }
+  
+  
+  }
 module.exports ={
     checkOutAddress,
     loadDashboard,
-    profileAdress
+    profileAdress,
+    editAddress,
+    walletTransaction,
+    profile
 }

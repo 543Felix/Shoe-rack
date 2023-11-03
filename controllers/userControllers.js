@@ -70,7 +70,7 @@ const insertUser = async(req,res)=>{
       return res.render("registration",{message:"Email already exists"})
     }
 
-    if(req.body.password!=req.body.confirmpassword){
+    if(req.body.password!==req.body.confirmpassword){
         return res.render("registration", { message: "Password and Confirm Password must be same" });
     }
 
@@ -78,6 +78,7 @@ const insertUser = async(req,res)=>{
     try {
         req.session.userData = req.body;
         req.session.mobile = mobileNumber 
+        req.session.referalCode = req.query.referalCode
         res.render('verifyotp')
     } catch (error) {
         console.log(error.message);
@@ -94,13 +95,43 @@ const verifyOtp = async(req,res)=>{
 
     if(verified){
     const spassword =await securePassword(userData.password)
-        const user = new User({
+    const referalCode = await userHelper.generateReferalCode()
+    console.log("referalcode afterOtp verify:",userData.referralcode);
+    const userReferedCode = req.session.referalCode|| userData.referralcode
+    const userRefered = await User.findOne({referalCode:userReferedCode})
+    console.log(userRefered);
+    let user
+    if(userRefered !== null){
+        const walletTransaction = {
+            date:new Date(),
+            type:"Credit",
+            amount:50,
+
+          }
+        await User.findOneAndUpdate({referalCode:userReferedCode},
+            {
+                $inc:{wallet:50},
+                $push: { walletTransaction: walletTransaction }
+        })
+         user = new User({
             firstname:userData.firstName,
             lastname:userData.lastName,
             email:userData.email,
             mobile:userData.mobile,
             password:spassword,
+            referalCode:referalCode,
+            wallet:20
+        }) 
+    }else{
+         user = new User({
+            firstname:userData.firstName,
+            lastname:userData.lastName,
+            email:userData.email,
+            mobile:userData.mobile,
+            password:spassword,
+            referalCode:referalCode
         })
+    }
         const userDataSave = await user.save()
         if(userDataSave){
             const token = createToken(user._id);
@@ -141,13 +172,102 @@ const logout = (req,res)=>{
         console.error(error.message);
     }
 }
+const forgetPassword = async(req,res)=>{
+    try {
+      res.render('forgetPassword')  
+    } catch (error) {
+      console.error(error.message);  
+    }
+}
+
+const forgetPasswordOtp = async(req,res)=>{
+    try {
+       const user = await User.find({email :req.body.email})
+       const mobile = user[0].mobile
+        if(mobile == req.body.mobile){
+            if(!user){
+                res.render('forgetPassword',{message:"User Not Registered"})
+               }else{
+                await otpHelper.sendOtp(mobile)
+                req.session.email = user[0].email
+                req.session.mobile = mobile
+                res.render("forgetPasswordOtp")
+               }
+        }
+       
+    } catch (error) {
+        console.error(error.message);
+    }
+}
   
+const resetPasswordOtpVerify = async (req,res)  => {
+    try{
+        const mobile = req.session.mobile
+        const reqOtp = req.body.otp
+        const verified = await otpHelper.verifyCode(mobile,reqOtp)
+        const otpHolder = await User.find({ mobile : req.body.mobile })
+        if(verified){
+            res.render('resetPassword')
+        }
+        else{
+            res.render('forgotPassword',{message:"Your OTP was Wrong"})
+        }
+    }catch(error){
+        console.log(error);
+    }
+}
+
+const setNewPassword = async (req ,res) => {
+    const newpw = req.body.newpassword
+    const confpw = req.body.confpassword
+
+    const mobile = req.session.mobile
+    const email = req.session.email
+
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
+    if(!passwordRegex.test(req.body.newpassword)){
+        return res.render("resetPassword", { message: "Password Should Contain atleast 8 characters,one number and a special character" });
+    }
+
+    if(newpw === confpw){
+        const user = await User.findOne({email:email})
+        const spassword =await securePassword(newpw)
+        const newUser = await User.updateOne({ email:email }, { $set: { password: spassword } });
+
+        res.redirect('/login')
+    }else{
+        res.render('resetPassword',{message:'Password and Confirm Password is not matching'})
+    }
+}
 const shopPage = async(req,res)=>{
     try {
+        const searchQuery = req.query.search||''
         const category = await Category.find({})
-
-        const product = await Product.find({isProductListed:true}).populate('category')
-        res.render('shop',{product,category})
+        const minPrice =parseFloat(req.query.minPrice)
+        const maxPrice = parseFloat(req.query.maxPrice)
+        const sortQuery = req.query.sort||'default'
+       let sortOption={}
+       if(sortQuery ==='price_asc'|| sortQuery ==='default') {
+        sortOption = {price:1}
+       }else{
+         sortOption ={price :-1}
+       }
+       const searchFilter ={
+        $and:[
+            {isCategoryListed:true},
+            {isProductListed:true},
+            {
+                $or:[
+                { productName: { $regex: new RegExp(searchQuery, 'i') } }
+              ]
+            }
+        ]
+       }
+       if(!isNaN(minPrice)&&!isNaN(maxPrice)){
+        searchFilter.$and.push({price:{$gte:minPrice ,$lt:maxPrice}})
+       }
+      const product = await Product.find(searchFilter).sort(sortOption).populate('category')
+      res.render('shop',{product,category})
     } catch (error) {
         console.error(error.message);
     }
@@ -157,11 +277,8 @@ const categoryPage = async(req,res)=>{
     try {
        const categoryId = req.query.id
        const category = await Category.find({})
-       const page = parseInt(req.query.page)||1
-       const limit = 3
-       const skip = (page-1)*limit
        const totalProducts = await Product.countDocuments({ category:categoryId,$and: [{ isListed: true }, { isProductListed: true }]}); // Get the total number of products
-        const totalPages = Math.ceil(totalProducts / limit);
+        
        const sortQuery = req.query.sort||'default'
        let sortOption={}
        if(sortQuery ==='price_asc'|| sortQuery ==='default') {
@@ -172,7 +289,7 @@ const categoryPage = async(req,res)=>{
        const product = await Product.find({category:categoryId,$and:[{isCategoryListed:true},{isProductListed:true}]})
        .sort(sortOption)
        .populate('category')
-       res.render('categoryShop',{product,category, currentPage :page ,totalPages,categoryId})
+       res.render('categoryShop',{product,category,categoryId})
     } catch (error) {
       console.error(error.message);  
     }
@@ -185,6 +302,10 @@ module.exports = {
     verifyOtp,
     verifyLogin,
     logout,
+    forgetPassword,
+    forgetPasswordOtp,
+    resetPasswordOtpVerify,
+    setNewPassword,
     shopPage,
     categoryPage
 };

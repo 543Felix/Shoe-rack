@@ -21,7 +21,6 @@ const requireAuth = (req,res,next)=>{
 
 const checkUser = (req,res,next)=>{
     const token = req.cookies.jwt
-
     if(token){
         jwt.verify(token,process.env.JWT_SECRET_KEY, async (err,decodedToken)=>{
            if(err){

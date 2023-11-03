@@ -1011,7 +1011,7 @@ h1, h2, h3, h4, h5, h6 {
   -o-transition: all 0.3s ease 0s;
   transition: all 0.3s ease 0s; }
   .header_area .main_menu .main_box {
-    background: #010101;
+    background: white;
     margin: 0px auto 0;
     max-width: 1200px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
@@ -1045,7 +1045,7 @@ h1, h2, h3, h4, h5, h6 {
         display: inline-block;
         font-size: 12px;
         font-weight: 500;
-        color: #ddd; }
+        color: black }
         @media (min-width: 991px) {
           .header_area .navbar .nav .nav-item .nav-link {
             padding: 10px 0; } }

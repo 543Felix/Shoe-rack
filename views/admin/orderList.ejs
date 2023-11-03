@@ -87,8 +87,6 @@
                                         <td>
                                             <% if (order.orders.orderStatus == 'Placed') { %>
                                                 <div class="badge rounded-pill alert-primary"><%= order.orders.orderStatus %></div>
-                                            <% } else if (order.orders.orderStatus == 'Dispatched') { %>
-                                                <div class="badge rounded-pill alert-info"><%= order.orders.orderStatus %></div>
                                             <% } else if (order.orders.orderStatus == 'Cancel Requested' ) { %>
                                                 <div class="badge rounded-pill alert-warning"><%= order.orders.orderStatus %></div>
                                             <% } else if (order.orders.orderStatus == 'Delivered') { %>
@@ -111,11 +109,11 @@
                                                 <a href="" data-bs-toggle="dropdown" class="btn btn-light rounded btn-sm font-sm"> <i class="material-icons md-more_horiz"></i> </a>
                                                 <div class="dropdown-menu">
                                                     <%if(order.orders.orderStatus=='Placed'||order.orders.orderStatus=='Cancel Declined'){%>
-                                                    <a class="dropdown-item" onclick="orderStatus('<%=order.orders._id%>','Dispatched')">Dispatched</a>
+                                                        <a class="dropdown-item" onclick="orderStatus('<%=order.orders._id%>','Delivered')">Delivered</a>
                                                     <a class="dropdown-item" onclick="cancelStatus('<%=order.orders._id%>','<%=order.user%>','Cancel Accepted')">Cancel Order</a>
     
-                                                    <%}else if(order.orders.orderStatus=='Dispatched'){%>
-                                                    <a class="dropdown-item" onclick="orderStatus('<%=order.orders._id%>','Delivered')">Delivered</a>
+                                                   
+                                                    
                                                     <%}else if(order.orders.orderStatus=='Cancel Requested'){%>
                                                         <a class="dropdown-item" onclick="cancelStatus('<%=order.orders._id%>','<%=order.user%>','Cancel Accepted')"> Accept Cancel</a>
                                                         <a class="dropdown-item" onclick="cancelStatus('<%=order.orders._id%>','<%=order.user%>','Cancel Declined')">Decline Cancel</a>

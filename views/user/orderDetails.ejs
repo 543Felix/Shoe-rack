@@ -105,13 +105,21 @@
                                         <p><%=product.productName%></p>
                                     </td>
                                     <td>
+										<% if(product.discountedPrice>0){ %>
+											<p>₹<%=product.discountedPrice%></p>
+											<% }else{ %>
                                         <p>₹<%=product.productPrice%></p>
+										<% } %>
                                     </td>
                                     <td>
                                         <h5>x<%=product.quantity%></h5>
                                     </td>
                                     <td>
+										<% if(product.discountedPrice>0){ %>
+											<p>₹<%=product.discountedPrice*product.quantity%></p>
+											<% }else{ %>
                                         <p>₹<%=product.productPrice*product.quantity%></p>
+										<% } %>
                                     </td>
                                 </tr>
                                 <% }) %>
@@ -127,6 +135,57 @@
 									<p>₹ <%=orders[0].totalPrice%></p>
 								</td>
 								
+							</tr>
+						</tbody>
+						<tbody>
+							
+							<tr>
+								<td>
+									<h4>Coupon Code</h4>
+								</td>
+								<td>
+									<h5></h5>
+								</td>
+								<td>
+									<p><%=orders[0].couponCode%></p>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									<h4>Discount %</h4>
+								</td>
+								<td>
+									<h5></h5>
+								</td>
+								<td>
+									<p><%=orders[0].discountPercentage%> %</p>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									<h4>Discount Amount</h4>
+								</td>
+								<td>
+									<h5></h5>
+								</td>
+								<td>
+									<p>₹ <%=orders[0].discountAmount%></p>
+								</td>
+							</tr>
+						
+							<tr>
+								<td>
+									<h4>Total</h4>
+								</td>
+								<td>
+									<h5></h5>
+								</td>
+								<td>
+									<p>₹ <%=orders[0].totalPrice%></p>
+								</td>
+								<td>
+									<a href="/invoice?id=<%=orders[0]._id%>" class="btn btn-primary">Download Invoice</a>
+								</td>
 							</tr>
 						</tbody>
 					</table>

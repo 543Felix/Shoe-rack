@@ -1,6 +1,9 @@
 const admin = require('../model/adminModel')
 const jwt = require('jsonwebtoken')
 const User = require ('../model/userModel')
+const Order = require('../model/orderModel')
+const Product = require('../model/productModel')
+const Category = require('../model/categoryModel')
 const orderHelper = require('../helper/orderHelper')
 const adminHelper = require('../helper/adminHelper')
 const maxAge = 3*24*60*60
@@ -21,7 +24,7 @@ const adminRegistration=async(req,res,next)=>{
 const adminLogin = async(req,res,next)=>{
     try {
         if(res.locals.admin !==null && res.locals.admin !== 'undefined'){
-          res.redirect('/admin/adminHome')
+          res.redirect('/admin/dashboard')
         }else{
             res.render('login')
         }
@@ -37,14 +40,7 @@ const adminHome = async(req,res)=>{
        console.error(error.message); 
     }
 } 
-// const securePassword =  async(password)=>{
-//     try {
-//         const passwordHash = await bcrypt.hash(password,10)
-//             return passwordHash
-//     } catch (error) {
-//         console.error(error.message);
-//     }
-// }
+
 const verifyLogin = async (req,res)=>{
     try {
        const name = req.body.name
@@ -54,7 +50,7 @@ const verifyLogin = async (req,res)=>{
          if(password===adminData.password){
             const token = createToken(adminData._id)
             res.cookie('jwtAdmin',token,{ httpOnly: true, maxAge: maxAge * 1000 })
-            res.redirect('/admin/adminHome')
+            res.redirect('/admin/dashboard')
          }else{
             res.render('login',{message:'Please verify your password'})
          }
@@ -167,6 +163,201 @@ const orderList = (req, res) => {
     });
   
   } 
+
+  const loadDashboard = async(req,res)=>{
+    try {
+      const orders = await Order.aggregate([
+        { $unwind: "$orders" },
+        {
+          $match: {
+            "orders.orderStatus": "Delivered"  // Consider only completed orders
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            totalPriceSum: { $sum: { $toInt: "$orders.totalPrice" } },
+            count: { $sum: 1 }
+          }
+        }
+  
+      ])
+
+      const salesData = await Order.aggregate([ 
+        { $unwind: "$orders" },
+        { $match: { "orders.orderStatus": "Delivered" } }, 
+        
+        {  
+          $group: {
+            _id: {
+              $dateToString: {  // Group by the date part of createdAt field
+                format: "%Y-%m-%d",
+                date: "$orders.createdAt"
+              }
+            },
+            dailySales: { $sum: { $toInt: "$orders.totalPrice" } }  // Calculate the daily sales
+          } 
+        }, 
+        {
+          $addFields: {
+            date: { $toDate: "$_id" }
+          }
+        },
+        {
+          $group: {
+              _id: {
+                year: { $year: "$date" } ,  // Extract the year from the date
+                month: { $month: "$date" },  // Extract the month from the date
+                day:{ $dayOfMonth : "$date"}
+              },
+            monthlySales: { $sum: "$dailySales" },  // Calculate the monthly sales
+            yearlySales: { $sum: "$dailySales" }   // Calculate the yearly sales
+          }
+        },
+        {
+          $sort: {
+            "_id.year": 1,  // Sort the results by year in ascending order
+            "_id.month": 1,  // Then, sort by month in ascending order
+            "_id.day":1
+          }
+        }
+      ])
+      
+      const categorySales = await Order.aggregate([
+        { $unwind: "$orders" },
+        { $unwind: "$orders.productDetails" },
+        {
+          $match: {
+            "orders.orderStatus": "Delivered",
+          },
+        },
+        {
+          $project: {
+            CategoryId: "$orders.productDetails.category",
+            totalPrice: {
+              $multiply: [
+                { $toDouble: "$orders.productDetails.productPrice" },
+                { $toDouble: "$orders.productDetails.quantity" },
+              ],
+            },
+          },
+        },
+        {
+          $group: {
+            _id: "$CategoryId",
+            PriceSum: { $sum: "$totalPrice" },
+          },
+        },
+        {
+          $lookup: {
+            from: "categories",
+            localField: "_id",
+            foreignField: "_id",
+            as: "categoryDetails",
+          },
+        },
+        {
+          $unwind: "$categoryDetails",
+        },
+        {
+          $project: {
+            categoryName: "$categoryDetails.categoryName",
+            PriceSum: 1,
+            _id: 0,
+          },
+        },
+      ]);
+      const salesCount = await Order.aggregate([
+        { $unwind: "$orders" },
+        {
+          $match: {
+            "orders.orderStatus": "Delivered"  
+          }
+        },
+        {
+          $group: {
+            _id: {
+              $dateToString: {  // Group by the date part of createdAt field
+                format: "%Y-%m-%d",
+                date: "$orders.createdAt"
+              }
+            },
+            orderCount: { $sum: 1 }  // Calculate the count of orders per date
+          }
+        },
+        {
+          $sort: {
+            _id: 1  // Sort the results by date in ascending order
+          }
+        }
+      ])
+
+      const categoryCount  = await Category.find({}).count()
+
+    const productsCount  = await Product.find({}).count()
+    const onlinePay = await adminHelper.getOnlineCount()
+    const walletPay = await adminHelper.getWalletCount()
+    const codPay = await adminHelper.getCodCount()
+
+console.log("loadDashBoard",onlinePay,walletPay,codPay);
+    const latestorders = await Order.aggregate([
+      {$unwind:"$orders"},
+      {$sort:{
+        'orders.createdAt' :-1
+      }},
+      {$limit:10}
+    ])
+
+    res.render('dashboard',{orders,productsCount,categoryCount,
+      onlinePay,salesData,order:latestorders,salesCount,
+      walletPay,codPay,categorySales})
+    } catch (error) {
+      console.error(error.message);
+    }
+  }
+
+
+  const getSalesReport =  async (req, res) => {
+    const report = await adminHelper.getSalesReport();
+    let details = [];
+    const getDate = (date) => {
+      const orderDate = new Date(date);
+      const day = orderDate.getDate();
+      const month = orderDate.getMonth() + 1;
+      const year = orderDate.getFullYear();
+      return `${isNaN(day) ? "00" : day} - ${isNaN(month) ? "00" : month} - ${
+        isNaN(year) ? "0000" : year
+      }`;
+    };
+  
+    report.forEach((orders) => {
+      details.push(orders.orders);
+    });
+  
+    res.render('salesReport',{details,getDate})
+  
+    
+  }
+
+  const postSalesReport =  (req, res) => {
+    let details = [];
+    const getDate = (date) => {
+      const orderDate = new Date(date);
+      const day = orderDate.getDate();
+      const month = orderDate.getMonth() + 1;
+      const year = orderDate.getFullYear();
+      return `${isNaN(day) ? "00" : day} - ${isNaN(month) ? "00" : month} - ${
+        isNaN(year) ? "0000" : year
+      }`;
+    };
+  
+    adminHelper.postReport(req.body).then((orderData) => {
+      orderData.forEach((orders) => {
+        details.push(orders.orders);
+      });
+      res.render("salesReport", {details,getDate});
+    });
+  }
 module.exports={
     adminRegistration,
     adminLogin,
@@ -180,5 +371,8 @@ module.exports={
     orderDetails,
     changeStatus,
     cancelOrder,
-    returnOrder
+    returnOrder,
+    loadDashboard,
+    getSalesReport,
+    postSalesReport
 }

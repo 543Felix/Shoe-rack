@@ -1,4 +1,5 @@
 const user = require('../model/userModel')
+const shortid = require('shortid') 
 const jwt = require('jsonwebtoken')
 require('dotenv').config()
 
@@ -43,6 +44,10 @@ const verifyLogin= (data)=>{
   })  
 }
 
+const generateReferalCode =async ()=>{
+   return shortid.generate()
+}
 module.exports ={
-    verifyLogin
+    verifyLogin,
+    generateReferalCode
 }

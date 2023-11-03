@@ -21,17 +21,23 @@ const userSchema  = new mongoose.Schema({
         type:String,
         required:true
     },
+    referalCode:{
+        type:String
+    },
     is_blocked:{
         type:Number,
         required:true,
         default:false
-    },
+    },                          
     wallet:{
         type:Number,
         default:0
     },
     walletTransaction:{
         type:Array
+    },
+    coupons:{
+        type:Array,
     }
 })
 

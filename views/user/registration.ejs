@@ -32,6 +32,38 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.1.5/dist/sweetalert2.min.css">
 	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.1.5/dist/sweetalert2.min.js"></script>
+		<style>
+    .login_form {
+        max-width: 500px;
+        margin: auto;
+        padding: 20px;
+        background-color: #f9f9f9;
+        border-radius: 10px;
+        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-control {
+        border-radius: 5px;
+    }
+
+    .error {
+        color: red;
+        font-size: 12px;
+    }
+
+    .primary-btn {
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        padding: 10px 20px;
+        cursor: pointer;
+    }
+</style>
 </head>
 <body>
 <%- include('../layouts/header.ejs') %>
@@ -76,6 +108,13 @@
                 <input type="password" class="form-control" id="confirmpassword" name="confirmpassword" placeholder="Confirm your Password" onkeyup="confPasswordValidation()">
                 <span id="confirmpasswordError" class="error"></span>
             </div>
+			<div class="col-md-12 form-group">
+				<input type="radio" id="hasReferral" onclick="toggleReferralField()"> I have a Referral Code
+			</div>
+			<div class="col-md-12 form-group" id="referralField" style="display:none;">
+				<input type="text" class="form-control" id="referralcode" name="referralcode" placeholder="Enter Referral Code">
+				<span id="referralcodeError" class="error"></span>
+			</div>			
             <div class="col-md-12 form-group">
                 <button type="submit" value="Register" class="primary-btn">Create an account</button>
             </div>
@@ -272,5 +311,12 @@
 
 
 	</script>
+	<script>
+		function toggleReferralField() {
+			var referralField = document.getElementById("referralField");
+			referralField.style.display = (document.getElementById("hasReferral").checked) ? "block" : "none";
+		}
+	</script>
+	
 </body>
 </html> 
