@@ -241,36 +241,53 @@ const setNewPassword = async (req ,res) => {
 }
 const shopPage = async(req,res)=>{
     try {
-        const searchQuery = req.query.search||''
-        const category = await Category.find({})
-        const minPrice =parseFloat(req.query.minPrice)
-        const maxPrice = parseFloat(req.query.maxPrice)
-        const sortQuery = req.query.sort||'default'
-       let sortOption={}
-       if(sortQuery ==='price_asc'|| sortQuery ==='default') {
-        sortOption = {price:1}
-       }else{
-         sortOption ={price :-1}
-       }
-       const searchFilter ={
-        $and:[
-            {isCategoryListed:true},
-            {isProductListed:true},
-            {
-                $or:[
-                { productName: { $regex: new RegExp(searchQuery, 'i') } }
-              ]
-            }
-        ]
-       }
-       if(!isNaN(minPrice)&&!isNaN(maxPrice)){
-        searchFilter.$and.push({price:{$gte:minPrice ,$lt:maxPrice}})
-       }
-      const product = await Product.find(searchFilter).sort(sortOption).populate('category')
-      res.render('shop',{product,category})
+        const searchQuery = req.query.search || '';
+        const category = await Category.find({});
+        const minPrice = parseFloat(req.query.minPrice);
+        const maxPrice = parseFloat(req.query.maxPrice);
+        const sortQuery = req.query.sort || 'default';
+    
+        let sortOption = {};
+        if (sortQuery === 'price_asc' || sortQuery === 'default') {
+            sortOption = { price: 1 };
+        } else {
+            sortOption = { price: -1 };
+        }
+    
+        const searchFilter = {
+            isCategoryListed: true,
+            isProductListed: true,
+            productName: { $regex: new RegExp(searchQuery, 'i') }
+        };
+    
+        
+    let products
+         products = await Product.find(searchFilter).populate('category');
+    
+        if (!isNaN(minPrice) && !isNaN(maxPrice)) {
+        products = products.filter(product => {
+                const price = product.discountedPrice > 0 ? product.discountedPrice : product.price;
+                return price >= minPrice && price < maxPrice;
+            });
+           
+        }
+        // products = products.filter(product => {
+        //     const price = product.discountedPrice > 0 ? product.discountedPrice : product.price;
+        //     return price >= minPrice && price < maxPrice;
+        // });
+    
+        products.sort((a, b) => {
+            const aPrice = a.discountedPrice > 0 ? a.discountedPrice : a.price;
+            const bPrice = b.discountedPrice > 0 ? b.discountedPrice : b.price;
+            return sortOption.price === 1 ? aPrice - bPrice : bPrice - aPrice;
+        });
+    
+        res.render('shop', { product: products, category });
     } catch (error) {
         console.error(error.message);
     }
+    
+    
 }
     
 const categoryPage = async(req,res)=>{
@@ -287,8 +304,13 @@ const categoryPage = async(req,res)=>{
          sortOption ={price :-1}
        }
        const product = await Product.find({category:categoryId,$and:[{isCategoryListed:true},{isProductListed:true}]})
-       .sort(sortOption)
        .populate('category')
+       product.sort((a, b) => {
+        const aPrice = a.discountedPrice > 0 ? a.discountedPrice : a.price;
+        const bPrice = b.discountedPrice > 0 ? b.discountedPrice : b.price;
+
+        return sortOption.price === 1 ? aPrice - bPrice : bPrice - aPrice;
+    });
        res.render('categoryShop',{product,category,categoryId})
     } catch (error) {
       console.error(error.message);  

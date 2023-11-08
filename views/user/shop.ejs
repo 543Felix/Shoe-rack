@@ -120,27 +120,18 @@
 
 
                         <div class="price">
-                          <% if(item.category.discountPercentage > 0||item.discountPercentage >0){ %>
-                            <% if((item.category.discountPercentage+item.discountPercentage)>99){ %>
-                              <h6>
-                                <span class="original-price" ><%= item.price%></span>
-                              </h6>
-                              <h6><i class="fa fa-inr" aria-hidden="true"> </i>
-                                <%=Math.floor((item.price)-(((item.category.discountPercentage+item.discountPercentage)/2)*item.price)/100)%>
-                              </h6>
-                              <% }else{ %>
+                          <% if(item.discountedPrice>0){ %>
                             <h6>
                               <span class="original-price" ><%= item.price%></span>
                             </h6>
                             <h6><i class="fa fa-inr" aria-hidden="true"> </i>
-                              <%= Math.floor((item.price)-((item.category.discountPercentage+item.discountPercentage)*item.price)/100)%>
+                              <%=item.discountedPrice%>
                             </h6>
-                            <% } %>
-                            <% }else{ %>
-                          <h6><i class="fa fa-inr" aria-hidden="true"> </i>
-                            <%= item.price%>
-                          </h6>
-                          <% } %>
+                          <% }else{ %>
+                        <h6><i class="fa fa-inr" aria-hidden="true"> </i>
+                          <%= item.price%>
+                        </h6>
+                        <% } %>
                         </div>
                         <div class="prd-bottom">
 

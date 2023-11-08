@@ -59,19 +59,10 @@ const createProduct = (data,images) => {
   };
   
 
-  const reListProduct = (query) => {
+  const reListProduct = (Id) => {
     return new Promise(async (resolve, reject) => {
       try {
-        const id = query;
-        const categorylisted = await Product.findOne({ _id: id }).populate('category');
-        
-        if (categorylisted.category.isListed === true) {
-          await Product.updateOne({ _id: id }, { isProductListed: true });
-        } else {
-          console.log('Cannot Relist');
-
-        }
-        
+         await Product.findOneAndUpdate({ _id: Id },{$set:{ isProductListed: true }})   
         resolve();
       } catch (error) {
         console.log(error.message);

@@ -1,4 +1,4 @@
-
+const Product = require('../model/productModel')
 const Category = require('../model/categoryModel')
 const createCategory = (data)=>{
 return new Promise(async(resolve,reject)=>{
@@ -38,17 +38,19 @@ const updateCategory=async(id,data)=>{
     console.error(error.message);
   }
 }
-const unlistCategory = async(userId)=>{
+const unlistCategory = async(Id)=>{
  try {
-  await Category.findByIdAndUpdate({_id:userId},{$set:{isListed:false}})
+  await Category.findByIdAndUpdate({_id:Id},{$set:{isListed:false}})
+  await Product.findOneAndUpdate({category:Id},{$set:{isCategoryListed:false}})
  } catch (error) {
   console.error(error.message);
  }
 }
 
-const relistCategory=async(userId)=>{
+const relistCategory=async(Id)=>{
   try {
-    await Category.findByIdAndUpdate({_id:userId},{$set:{isListed:true}})
+    await Category.findByIdAndUpdate({_id:Id},{$set:{isListed:true}})
+    await Product.findOneAndUpdate({category:Id},{$set:{isCategoryListed:true}})
   } catch (error) {
    console.error(error.message); 
   }

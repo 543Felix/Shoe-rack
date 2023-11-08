@@ -52,10 +52,10 @@ const loadEditCategoryOffer = async(req,res)=>{
 const editCategoryOffer = async(req,res)=>{
     try {
        const id = req.body.categoryId
-       console.log("updateCaqtegoryOffer",id);
        const category = await Category.findByIdAndUpdate({_id:id},{
         $set:{discountValidity:req.body.validity,discountPercentage:req.body.discountPercentage}
-       })  
+       }) 
+       offerHelpper.addOfferPrice(id) 
         category.save().then(()=>{
             res.send({status:true})
         })
@@ -68,9 +68,10 @@ const deleteCategoryOffer = async (req,res)=>{
     try {
         const id = req.query.id
        await Category.findByIdAndUpdate({_id:id.toString()},{
-            $set:{discountPercentage:0,discountValidity: new Date()}
-        }).then((response)=>{
-            response.save()
+            $set:{discountPercentage:0,discountValidity: null}
+        })
+        offerHelpper.addOfferPrice(id.toString())
+        .then((response)=>{
             res.send({status:true})
         })
        
@@ -92,16 +93,19 @@ const createCategoryOffer = async (req, res) => {
     try {
         const categoryId = req.body.categoryId
         const Id = new ObjectId(categoryId)
-        const discount = req.body.discountPercentage
-        const categoryOfferExists = await Category.findOne({ $and: [{ _id: Id, discountValidity: { $gt: req.body.discountValidity } }] });
-        if (categoryOfferExists == null) {
+        const currentDate = new Date()
+        const category = await Category.findOne({ $and: [{ _id: Id,discountPercentage:{$gt:0} }] });
+        if (category == null) {
             await Category.findOneAndUpdate({ _id: Id },
                 {
                     $set:
                         { discountPercentage: req.body.discountPercentage, discountValidity: req.body.validity }
                 }
             )
-            res.send({ status: "true" })
+            offerHelpper.addOfferPrice(Id).then((response)=>{
+              res.send({ status: "true" })
+            })
+            
         } else {
             res.send({ status: 'false' })
         }
@@ -127,8 +131,8 @@ const addProductOffer = async(req,res)=>{
                     discountPercentage:req.body.discountPercentage,
                     discountValidity:req.body.validity
                 }
-            }).then((product)=>{
-                product.save()
+            })
+            offerHelpper.addOfferPriceforSingleProduct(id).then((product)=>{
                 res.send({status:"true"})
             })
         }else{
@@ -187,11 +191,10 @@ const loadEditProductOffer = async(req,res)=>{
 const editProductOffer = async(req,res)=>{
     try {
         const id = req.body.productId
-        console.log("editProdutOffer",id);
         const product = await Product.findByIdAndUpdate({_id:id},{
          $set:{discountValidity:req.body.validity,discountPercentage:req.body.discountPercentage}
         })  
-         product.save().then(()=>{
+        offerHelpper.addOfferPriceforSingleProduct(id).then(()=>{
              res.send({status:true})
          })
      } catch (error) {
@@ -204,8 +207,8 @@ const deleteProductOffer = async (req,res)=>{
         const id = req.query.id
        await Product.findByIdAndUpdate({_id:id.toString()},{
             $set:{discountPercentage:0,discountValidity: new Date()}
-        }).then((response)=>{
-            response.save()
+        })
+        offerHelpper.addOfferPriceforSingleProduct(id.toString()).then((response)=>{
             res.send({status:true})
         })
        

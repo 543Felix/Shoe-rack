@@ -107,14 +107,9 @@
 				<div class="col-lg-5 offset-lg-1">
 					<div class="s_product_text">
 						<h3><%=product.productName%></h3>
-						 <% if(product.category.discountPercentage >0||product.discountPercentage >0){ %>
-							<% if((product.category.discountPercentage+product.discountPercentage)>99){ %>
-								<i style="color: red;" class="fa fa-inr" aria-hidden="true"></i><span style="text-decoration: line-through; color: red;"><%=product.price%></span>
-							<h2><i class="fa fa-inr" aria-hidden="true"></i> <%=Math.floor(product.price-(product.price*(product.category.discountPercentage+product.discountPercentage)/2)/100)%></h2>
-							<% }else{ %>
-								<i style="color: red;" class="fa fa-inr" aria-hidden="true"></i><span style="text-decoration: line-through; color: red;"><%=product.price%></span>
-							<h2><i class="fa fa-inr" aria-hidden="true"></i> <%=Math.floor(product.price-(product.price*(product.category.discountPercentage+product.discountPercentage)/100))%></h2>
-								<% } %>
+						 <% if(product.discountedPrice>0){ %>
+									<i style="color: red;" class="fa fa-inr" aria-hidden="true"></i><span style="text-decoration: line-through; color: red;"><%=product.price%></span>
+							<h2><i class="fa fa-inr" aria-hidden="true"></i> <%=product.discountedPrice%></h2>
 							<% }else{ %>
 						<h2><i class="fa fa-inr" aria-hidden="true"></i> <%=product.price%></h2>
 						<% } %>

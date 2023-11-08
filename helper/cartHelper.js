@@ -8,10 +8,9 @@ const { ObjectId } = mongoose.Types
 
 const addToCart = async (productId, userId) => {
     const product = await Product.findOne({ _id: productId }).populate('category')
-    console.log("adToCart",product);
     let  productObj
     let discountPercentage = product.category.discountPercentage+product.discountPercentage
-    if( discountPercentage >0){
+    if( discountPercentage >0&&discountPercentage<=99){
          productObj = {
             productId: productId,
             quantity: 1,
@@ -19,12 +18,22 @@ const addToCart = async (productId, userId) => {
             discountedPrice: (product.price)-((product.price)*discountPercentage)/100
         }
     }else if(discountPercentage >99){
-        productObj = {
-            productId: productId,
-            quantity: 1,
-            total: (product.price)-((product.price)*discountPercentage)/100,
-            discountedPrice: Math.floor((product.price)-((product.price)*discountPercentage/2)/100)
+        if(product.category.discountPercentage>=product.discountPercentage){
+            productObj = {
+                productId: productId,
+                quantity: 1,
+                total: (product.price)-((product.price)*discountPercentage)/100,
+                discountedPrice: Math.floor((product.price)-((product.price)*product.category.discountPercentage)/100)
+            }
+        }else{
+            productObj = {
+                productId: productId,
+                quantity: 1,
+                total: (product.price)-((product.price)*discountPercentage)/100,
+                discountedPrice: Math.floor((product.price)-((product.price)*product.discountPercentage)/100)
+            }
         }
+        
     }
     else{
         productObj = {
@@ -49,7 +58,7 @@ const addToCart = async (productId, userId) => {
                     const productExist = await Cart.findOne({ user: userId, 'cartItems.productId': productId })
                     if (productExist) {
                         if (product.stock - quantity[0].cartItems.quantity > 0) {
-                            if(discountPercentage >0){
+                            if(discountPercentage >0&&discountPercentage<=99){
                                 Cart.updateOne(
                                     { user: userId, "cartItems.productId": productId },
                                     {
@@ -65,20 +74,37 @@ const addToCart = async (productId, userId) => {
                                     resolve({response, status: true })
                                 })
                             }else if(discountPercentage>99){
-                                Cart.updateOne(
-                                    { user: userId, "cartItems.productId": productId },
-                                    {
-                                        $inc: {
-                                            'cartItems.$.quantity': 1,
-                                            'cartItems.$.total': (product.price)-((product.price)*discountPercentage/2)/100,
-                                        },
-                                        $set: {
-                                            cartTotal: cart.cartTotal + (product.price)-((product.price)*discountPercentage/2)/100
+                                if(product.category.discountPercentage>=product.discountPercentage){
+                                    Cart.updateOne(
+                                        { user: userId, "cartItems.productId": productId },
+                                        {
+                                            $inc: {
+                                                'cartItems.$.quantity': 1,
+                                                'cartItems.$.total': (product.price)-((product.price)*product.category.discountPercentage)/100,
+                                            },
+                                            $set: {
+                                                cartTotal: cart.cartTotal + (product.price)-((product.price)*product.category.discountPercentage)/100
+                                            }
                                         }
-                                    }
-                                ).then((response) => {
-                                    resolve({response, status: true })
-                                })
+                                    ).then((response) => {
+                                        resolve({response, status: true })
+                                    })
+                                }else{
+                                    Cart.updateOne(
+                                        { user: userId, "cartItems.productId": productId },
+                                        {
+                                            $inc: {
+                                                'cartItems.$.quantity': 1,
+                                                'cartItems.$.total': (product.price)-((product.price)*product.discountPercentage)/100,
+                                            },
+                                            $set: {
+                                                cartTotal: cart.cartTotal + (product.price)-((product.price)*product.discountPercentage)/100
+                                            }
+                                        }
+                                    ).then((response) => {
+                                        resolve({response, status: true })
+                                    })
+                                }
                             }else{
                                 Cart.updateOne(
                                     { user: userId, "cartItems.productId": productId },
@@ -101,7 +127,7 @@ const addToCart = async (productId, userId) => {
                         }
                     } else {
                         if (product.stock > 0) {
-                            if(discountPercentage>0){
+                            if(discountPercentage >0&&discountPercentage<=99){
                                 Cart.updateOne(
                                     { user: userId },
                                     {
@@ -112,15 +138,28 @@ const addToCart = async (productId, userId) => {
                                     resolve({ status: true })
                                 })
                             }else if(discountPercentage >99){
-                                Cart.updateOne(
-                                    { user: userId },
-                                    {
-                                        $push: { cartItems: productObj },
-                                        $inc: { cartTotal:  Math.floor((product.price)-((product.price)*discountPercentage/2)/100) }
-                                    }
-                                ).then((response) => {
-                                    resolve({ status: true })
-                                })
+                                if(product.category.discountPercentage>=product.discountPercentage){
+                                    Cart.updateOne(
+                                        { user: userId },
+                                        {
+                                            $push: { cartItems: productObj },
+                                            $inc: { cartTotal:  Math.floor((product.price)-((product.price)*product.category.discountPercentage)/100) }
+                                        }
+                                    ).then((response) => {
+                                        resolve({ status: true })
+                                    })
+                                }else{
+                                    Cart.updateOne(
+                                        { user: userId },
+                                        {
+                                            $push: { cartItems: productObj },
+                                            $inc: { cartTotal:  Math.floor((product.price)-((product.price)*product.discountPercentage)/100) }
+                                        }
+                                    ).then((response) => {
+                                        resolve({ status: true })
+                                    })
+                                }  
+                               
                             }else{
                                 Cart.updateOne(
                                     { user: userId },
@@ -140,7 +179,7 @@ const addToCart = async (productId, userId) => {
                     }
                 } else {
                     if (product.stock > 0) {
-                        if(discountPercentage>0){
+                        if(discountPercentage >0&&discountPercentage<=99){
                             const newCart = await Cart({
                                 user: userId,
                                 cartItems: productObj,
@@ -150,14 +189,26 @@ const addToCart = async (productId, userId) => {
                                 resolve({ status: true })
                             })
                         }else if(discountPercentage >99){
-                            const newCart = await Cart({
-                                user: userId,
-                                cartItems: productObj,
-                                cartTotal: Math.floor((product.price)-((product.price)*discountPercentage/2)/100),
-                            })
-                            await newCart.save().then((response) => {
-                                resolve({ status: true })
-                            })
+                            if(product.category.discountPercentage>=product.discountPercentage){
+                                const newCart = await Cart({
+                                    user: userId,
+                                    cartItems: productObj,
+                                    cartTotal: Math.floor((product.price)-((product.price)*product.category.discountPercentage)/100),
+                                })
+                                await newCart.save().then((response) => {
+                                    resolve({ status: true })
+                                })
+                            }else{
+                                const newCart = await Cart({
+                                    user: userId,
+                                    cartItems: productObj,
+                                    cartTotal: Math.floor((product.price)-((product.price)*product.discountPercentage)/100),
+                                })
+                                await newCart.save().then((response) => {
+                                    resolve({ status: true })
+                                })
+                            }
+                            
                         }else{
                             const newCart = await Cart({
                                 user: userId,
@@ -325,8 +376,6 @@ const deleteProduct = async (data) => {
     {$project:{"cartItems.discountedPrice":1,_id:0}}
    ])
    console.log("deleteProduct",result);
-    // const result = await Cart.aggregate([{$match:}])
-    console.log("deleteProduct","userId:",userId,"cartId:",cartId,"proId:",proId);
     try {
         const cartItem = cart.cartItems.find(item => item.productId.equals(proId))
         const quantityToRemove = cartItem.quantity

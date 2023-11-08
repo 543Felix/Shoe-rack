@@ -1,14 +1,38 @@
-const config = require('./config/mongoDb')
-config.connectDb()
-
-
-
 const express = require('express')
 const cookieParser = require('cookie-parser') 
 const session = require('express-session')
 const ejs = require('ejs')
 const app = express()
+const http = require('http')
 const path = require('path')
+
+// const server = http.createServer(app);
+ 
+// const io = require("socket.io")(server);
+
+// io.on("connection", (socket) => {
+//   console.log("A new client has connected!");
+
+//   // Listen for messages from the client.
+//   socket.on("message", (data) => {
+//     console.log("Received message:", data);
+
+//     // Broadcast the message to all connected clients.
+//     io.emit("message", data);
+//   });
+
+//   // Disconnect the socket when the client disconnects.
+//   socket.on("disconnect", () => {
+//     console.log("A client has disconnected.");
+//   });
+// });
+
+const config = require('./config/mongoDb')
+config.connectDb()
+
+
+
+
 
  app.set('view engine','ejs')
 app.use(session({

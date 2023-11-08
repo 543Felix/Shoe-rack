@@ -47,6 +47,8 @@ const verifyLogin= (data)=>{
 const generateReferalCode =async ()=>{
    return shortid.generate()
 }
+
+
 module.exports ={
     verifyLogin,
     generateReferalCode

@@ -1,6 +1,7 @@
 const Product = require('../model/productModel')
 const category = require('../model/categoryModel')
 const productHelper = require('../helper/productHelper')
+const offerHelper = require('../helper/offerHelper')
 
     const loadaddProduct = async(req,res)=>{
         try {
@@ -77,6 +78,7 @@ const productHelper = require('../helper/productHelper')
             const images = req.files.map(file => file.filename);
             const updatedImages = images.length > 0 ? images : productData.images;
             await productHelper.updateProduct(req.body,updatedImages)
+            await offerHelper.addOfferPriceforSingleProduct(req.body.id)
             res.redirect('/admin/productsList');
         } catch (error) {
           console.log(error.message);
